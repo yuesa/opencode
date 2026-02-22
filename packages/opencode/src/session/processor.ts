@@ -45,7 +45,10 @@ export namespace SessionProcessor {
       async process(streamInput: LLM.StreamInput) {
         log.info("process")
         needsCompaction = false
-        const shouldBreak = (await Config.get()).experimental?.continue_loop_on_deny !== true
+        const cfg = await Config.get()
+        const shouldBreak = cfg.experimental?.continue_loop_on_deny !== true
+        // streaming defaults to true; set experimental.streaming = false to disable delta events
+        const streamingEnabled = cfg.experimental?.streaming !== false
         while (true) {
           try {
             let currentText: MessageV2.TextPart | undefined
@@ -83,13 +86,15 @@ export namespace SessionProcessor {
                     const part = reasoningMap[value.id]
                     part.text += value.text
                     if (value.providerMetadata) part.metadata = value.providerMetadata
-                    await Session.updatePartDelta({
-                      sessionID: part.sessionID,
-                      messageID: part.messageID,
-                      partID: part.id,
-                      field: "text",
-                      delta: value.text,
-                    })
+                    if (streamingEnabled) {
+                      await Session.updatePartDelta({
+                        sessionID: part.sessionID,
+                        messageID: part.messageID,
+                        partID: part.id,
+                        field: "text",
+                        delta: value.text,
+                      })
+                    }
                   }
                   break
 
@@ -303,13 +308,15 @@ export namespace SessionProcessor {
                   if (currentText) {
                     currentText.text += value.text
                     if (value.providerMetadata) currentText.metadata = value.providerMetadata
-                    await Session.updatePartDelta({
-                      sessionID: currentText.sessionID,
-                      messageID: currentText.messageID,
-                      partID: currentText.id,
-                      field: "text",
-                      delta: value.text,
-                    })
+                    if (streamingEnabled) {
+                      await Session.updatePartDelta({
+                        sessionID: currentText.sessionID,
+                        messageID: currentText.messageID,
+                        partID: currentText.id,
+                        field: "text",
+                        delta: value.text,
+                      })
+                    }
                   }
                   break
 
