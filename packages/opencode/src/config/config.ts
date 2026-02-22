@@ -1201,6 +1201,12 @@ export namespace Config {
             .positive()
             .optional()
             .describe("Timeout in milliseconds for model context protocol (MCP) requests"),
+          streaming: z
+            .boolean()
+            .optional()
+            .describe(
+              "Enable streaming delta events for real-time text display (default: true). Set to false to disable incremental updates and only show complete text when finished.",
+            ),
         })
         .optional(),
     })
@@ -1309,7 +1315,7 @@ export namespace Config {
           const error = `${printParseErrorCode(e.error)} at line ${line}, column ${column}`
           if (!problemLine) return error
 
-          return `${error}\n   Line ${line}: ${problemLine}\n${"".padStart(column + 9)}^`
+          return `${error}\n   Line ${line}: ${problemLine}\n${" ".padStart(column + 9)}^`
         })
         .join("\n")
 
@@ -1430,7 +1436,7 @@ export namespace Config {
           const error = `${printParseErrorCode(e.error)} at line ${line}, column ${column}`
           if (!problemLine) return error
 
-          return `${error}\n   Line ${line}: ${problemLine}\n${"".padStart(column + 9)}^`
+          return `${error}\n   Line ${line}: ${problemLine}\n${" ".padStart(column + 9)}^`
         })
         .join("\n")
 
